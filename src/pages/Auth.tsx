@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -7,12 +7,44 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Computer } from 'lucide-react';
+import { Computer, Shield, Users, GraduationCap } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select(`
+        *,
+        user_roles(role)
+      `)
+      .order('full_name');
+    setUsers(data || []);
+  };
+
+  const usersByRole = {
+    admin: users.filter((u) => u.user_roles?.[0]?.role === 'admin'),
+    lab_staff: users.filter((u) => u.user_roles?.[0]?.role === 'lab_staff'),
+    student: users.filter((u) => u.user_roles?.[0]?.role === 'student'),
+  };
+
+  const handleQuickLogin = (userEmail: string) => {
+    const emailInput = document.getElementById('signin-email') as HTMLInputElement;
+    if (emailInput) {
+      emailInput.value = userEmail;
+      toast({ title: 'Email filled', description: 'Enter password to login' });
+    }
+  };
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -76,7 +108,9 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-primary/5 p-4">
-      <Card className="w-full max-w-md shadow-card">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full max-w-6xl">
+        {/* Login Form */}
+        <Card className="shadow-card">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-primary/80">
@@ -158,8 +192,97 @@ export default function Auth() {
               </form>
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* User Lists */}
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>Quick Login - Select User</CardTitle>
+            <CardDescription>Click on any user to fill their email</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[500px] pr-4">
+              <div className="space-y-6">
+                {/* Admins */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Shield className="w-5 h-5 text-primary" />
+                    <h3 className="font-semibold text-lg">Admins</h3>
+                    <Badge variant="default">{usersByRole.admin.length}</Badge>
+                  </div>
+                  <div className="space-y-2">
+                    {usersByRole.admin.map((user) => (
+                      <Button
+                        key={user.id}
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => handleQuickLogin(user.email)}
+                      >
+                        <div className="text-left">
+                          <div className="font-medium">{user.full_name}</div>
+                          <div className="text-xs text-muted-foreground">{user.email}</div>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Lab Staff */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Users className="w-5 h-5 text-accent" />
+                    <h3 className="font-semibold text-lg">Lab Staff</h3>
+                    <Badge variant="secondary">{usersByRole.lab_staff.length}</Badge>
+                  </div>
+                  <div className="space-y-2">
+                    {usersByRole.lab_staff.map((user) => (
+                      <Button
+                        key={user.id}
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => handleQuickLogin(user.email)}
+                      >
+                        <div className="text-left">
+                          <div className="font-medium">{user.full_name}</div>
+                          <div className="text-xs text-muted-foreground">{user.email}</div>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Students */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <GraduationCap className="w-5 h-5 text-success" />
+                    <h3 className="font-semibold text-lg">Students</h3>
+                    <Badge variant="outline">{usersByRole.student.length}</Badge>
+                  </div>
+                  <div className="space-y-2">
+                    {usersByRole.student.map((user) => (
+                      <Button
+                        key={user.id}
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => handleQuickLogin(user.email)}
+                      >
+                        <div className="text-left">
+                          <div className="font-medium">{user.full_name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {user.email}
+                            {user.student_id && ` • ${user.student_id}`}
+                          </div>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
