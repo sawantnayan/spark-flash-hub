@@ -20,7 +20,6 @@ import IssuesTab from '@/components/dashboard/IssuesTab';
 import SessionsTab from '@/components/dashboard/SessionsTab';
 import SoftwareTab from '@/components/dashboard/SoftwareTab';
 import UsersTab from '@/components/dashboard/UsersTab';
-import AnalyticsCharts from '@/components/dashboard/AnalyticsCharts';
 
 export default function Dashboard() {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -110,9 +109,6 @@ export default function Dashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Analytics Charts */}
-        <AnalyticsCharts />
-
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="shadow-card hover:shadow-lg transition-shadow">
