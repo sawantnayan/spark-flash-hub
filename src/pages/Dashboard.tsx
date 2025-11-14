@@ -17,6 +17,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ComputersTab from '@/components/dashboard/ComputersTab';
 import BookingsTab from '@/components/dashboard/BookingsTab';
 import IssuesTab from '@/components/dashboard/IssuesTab';
+import SessionsTab from '@/components/dashboard/SessionsTab';
+import SoftwareTab from '@/components/dashboard/SoftwareTab';
+import UsersTab from '@/components/dashboard/UsersTab';
+import AnalyticsCharts from '@/components/dashboard/AnalyticsCharts';
 
 export default function Dashboard() {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -106,6 +110,9 @@ export default function Dashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* Analytics Charts */}
+        <AnalyticsCharts />
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="shadow-card hover:shadow-lg transition-shadow">
@@ -167,7 +174,7 @@ export default function Dashboard() {
         <Card className="shadow-card">
           <Tabs defaultValue="computers" className="w-full">
             <CardHeader>
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="computers">
                   <Computer className="w-4 h-4 mr-2" />
                   Computers
@@ -180,6 +187,18 @@ export default function Dashboard() {
                   <AlertCircle className="w-4 h-4 mr-2" />
                   Issues
                 </TabsTrigger>
+                <TabsTrigger value="sessions">
+                  <Clock className="w-4 h-4 mr-2" />
+                  Sessions
+                </TabsTrigger>
+                <TabsTrigger value="software">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Software
+                </TabsTrigger>
+                <TabsTrigger value="users">
+                  <Users className="w-4 h-4 mr-2" />
+                  Users
+                </TabsTrigger>
               </TabsList>
             </CardHeader>
             <CardContent>
@@ -191,6 +210,15 @@ export default function Dashboard() {
               </TabsContent>
               <TabsContent value="issues" className="mt-0">
                 <IssuesTab userId={user?.id || ''} isAdminOrStaff={isAdminOrStaff} onUpdate={fetchStats} />
+              </TabsContent>
+              <TabsContent value="sessions" className="mt-0">
+                <SessionsTab userId={user?.id || ''} isAdminOrStaff={isAdminOrStaff} onUpdate={fetchStats} />
+              </TabsContent>
+              <TabsContent value="software" className="mt-0">
+                <SoftwareTab isAdminOrStaff={isAdminOrStaff} onUpdate={fetchStats} />
+              </TabsContent>
+              <TabsContent value="users" className="mt-0">
+                <UsersTab isAdminOrStaff={isAdminOrStaff} />
               </TabsContent>
             </CardContent>
           </Tabs>

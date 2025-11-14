@@ -14,16 +14,343 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          computer_id: string
+          created_at: string | null
+          end_time: string
+          id: string
+          purpose: string | null
+          start_time: string
+          status: Database["public"]["Enums"]["booking_status"] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          computer_id: string
+          created_at?: string | null
+          end_time: string
+          id?: string
+          purpose?: string | null
+          start_time: string
+          status?: Database["public"]["Enums"]["booking_status"] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          computer_id?: string
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          purpose?: string | null
+          start_time?: string
+          status?: Database["public"]["Enums"]["booking_status"] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_computer_id_fkey"
+            columns: ["computer_id"]
+            isOneToOne: false
+            referencedRelation: "computers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      computer_software: {
+        Row: {
+          computer_id: string
+          id: string
+          installed_at: string | null
+          software_id: string
+        }
+        Insert: {
+          computer_id: string
+          id?: string
+          installed_at?: string | null
+          software_id: string
+        }
+        Update: {
+          computer_id?: string
+          id?: string
+          installed_at?: string | null
+          software_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "computer_software_computer_id_fkey"
+            columns: ["computer_id"]
+            isOneToOne: false
+            referencedRelation: "computers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "computer_software_software_id_fkey"
+            columns: ["software_id"]
+            isOneToOne: false
+            referencedRelation: "software"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      computers: {
+        Row: {
+          created_at: string | null
+          id: string
+          location: string | null
+          name: string
+          notes: string | null
+          os_version: string | null
+          processor: string | null
+          purchase_date: string | null
+          ram: string | null
+          status: Database["public"]["Enums"]["computer_status"] | null
+          storage: string | null
+          system_id: string
+          updated_at: string | null
+          warranty_expiry: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          notes?: string | null
+          os_version?: string | null
+          processor?: string | null
+          purchase_date?: string | null
+          ram?: string | null
+          status?: Database["public"]["Enums"]["computer_status"] | null
+          storage?: string | null
+          system_id: string
+          updated_at?: string | null
+          warranty_expiry?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          notes?: string | null
+          os_version?: string | null
+          processor?: string | null
+          purchase_date?: string | null
+          ram?: string | null
+          status?: Database["public"]["Enums"]["computer_status"] | null
+          storage?: string | null
+          system_id?: string
+          updated_at?: string | null
+          warranty_expiry?: string | null
+        }
+        Relationships: []
+      }
+      issues: {
+        Row: {
+          computer_id: string
+          created_at: string | null
+          description: string
+          id: string
+          priority: string | null
+          reported_by: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: Database["public"]["Enums"]["issue_status"] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          computer_id: string
+          created_at?: string | null
+          description: string
+          id?: string
+          priority?: string | null
+          reported_by: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["issue_status"] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          computer_id?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          priority?: string | null
+          reported_by?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["issue_status"] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issues_computer_id_fkey"
+            columns: ["computer_id"]
+            isOneToOne: false
+            referencedRelation: "computers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          department: string | null
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          student_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          department?: string | null
+          email: string
+          full_name: string
+          id: string
+          phone?: string | null
+          student_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          department?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          student_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      session_logs: {
+        Row: {
+          computer_id: string
+          created_at: string | null
+          duration_minutes: number | null
+          id: string
+          login_time: string | null
+          logout_time: string | null
+          user_id: string
+        }
+        Insert: {
+          computer_id: string
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          login_time?: string | null
+          logout_time?: string | null
+          user_id: string
+        }
+        Update: {
+          computer_id?: string
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          login_time?: string | null
+          logout_time?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_logs_computer_id_fkey"
+            columns: ["computer_id"]
+            isOneToOne: false
+            referencedRelation: "computers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      software: {
+        Row: {
+          created_at: string | null
+          id: string
+          license_expiry: string | null
+          license_key: string | null
+          name: string
+          notes: string | null
+          updated_at: string | null
+          vendor: string | null
+          version: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          license_expiry?: string | null
+          license_key?: string | null
+          name: string
+          notes?: string | null
+          updated_at?: string | null
+          vendor?: string | null
+          version?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          license_expiry?: string | null
+          license_key?: string | null
+          name?: string
+          notes?: string | null
+          updated_at?: string | null
+          vendor?: string | null
+          version?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          admin: string | null
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          admin?: string | null
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          admin?: string | null
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin_or_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "lab_staff" | "student"
+      booking_status: "pending" | "confirmed" | "cancelled" | "completed"
+      computer_status: "available" | "in_use" | "maintenance" | "retired"
+      issue_status: "pending" | "in_progress" | "resolved" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +477,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "lab_staff", "student"],
+      booking_status: ["pending", "confirmed", "cancelled", "completed"],
+      computer_status: ["available", "in_use", "maintenance", "retired"],
+      issue_status: ["pending", "in_progress", "resolved", "closed"],
+    },
   },
 } as const
