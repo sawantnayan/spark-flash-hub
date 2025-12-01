@@ -11,7 +11,11 @@ import {
   Users, 
   LogOut,
   Plus,
-  Clock
+  Clock,
+  Bell,
+  Megaphone,
+  FileText,
+  FileSpreadsheet
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ComputersTab from '@/components/dashboard/ComputersTab';
@@ -20,6 +24,10 @@ import IssuesTab from '@/components/dashboard/IssuesTab';
 import SessionsTab from '@/components/dashboard/SessionsTab';
 import SoftwareTab from '@/components/dashboard/SoftwareTab';
 import UsersTab from '@/components/dashboard/UsersTab';
+import NotificationsTab from '@/components/dashboard/NotificationsTab';
+import LabNoticesTab from '@/components/dashboard/LabNoticesTab';
+import ReportsTab from '@/components/dashboard/ReportsTab';
+import ImportExportTab from '@/components/dashboard/ImportExportTab';
 
 export default function Dashboard() {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -170,7 +178,7 @@ export default function Dashboard() {
         <Card className="shadow-card">
           <Tabs defaultValue="computers" className="w-full">
             <CardHeader>
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-6 lg:grid-cols-10">
                 <TabsTrigger value="computers">
                   <Computer className="w-4 h-4 mr-2" />
                   Computers
@@ -195,6 +203,22 @@ export default function Dashboard() {
                   <Users className="w-4 h-4 mr-2" />
                   Users
                 </TabsTrigger>
+                <TabsTrigger value="notifications">
+                  <Bell className="w-4 h-4 mr-2" />
+                  Notifications
+                </TabsTrigger>
+                <TabsTrigger value="notices">
+                  <Megaphone className="w-4 h-4 mr-2" />
+                  Notices
+                </TabsTrigger>
+                <TabsTrigger value="reports">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Reports
+                </TabsTrigger>
+                <TabsTrigger value="import-export">
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  Import/Export
+                </TabsTrigger>
               </TabsList>
             </CardHeader>
             <CardContent>
@@ -215,6 +239,18 @@ export default function Dashboard() {
               </TabsContent>
               <TabsContent value="users" className="mt-0">
                 <UsersTab isAdminOrStaff={isAdminOrStaff} />
+              </TabsContent>
+              <TabsContent value="notifications" className="mt-0">
+                <NotificationsTab userId={user?.id || ''} isAdminOrStaff={isAdminOrStaff} />
+              </TabsContent>
+              <TabsContent value="notices" className="mt-0">
+                <LabNoticesTab userId={user?.id || ''} isAdminOrStaff={isAdminOrStaff} />
+              </TabsContent>
+              <TabsContent value="reports" className="mt-0">
+                <ReportsTab isAdminOrStaff={isAdminOrStaff} />
+              </TabsContent>
+              <TabsContent value="import-export" className="mt-0">
+                <ImportExportTab isAdminOrStaff={isAdminOrStaff} userId={user?.id || ''} />
               </TabsContent>
             </CardContent>
           </Tabs>
