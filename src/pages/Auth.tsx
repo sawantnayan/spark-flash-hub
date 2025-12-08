@@ -14,6 +14,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
+  const [signInEmail, setSignInEmail] = useState('');
+  const [signInPassword, setSignInPassword] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -39,11 +41,9 @@ export default function Auth() {
   };
 
   const handleQuickLogin = (userEmail: string) => {
-    const emailInput = document.getElementById('signin-email') as HTMLInputElement;
-    if (emailInput) {
-      emailInput.value = userEmail;
-      toast({ title: 'Email filled', description: 'Enter password to login' });
-    }
+    setSignInEmail(userEmail);
+    setSignInPassword('');
+    toast({ title: 'Email filled', description: 'Enter password to login' });
   };
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -85,13 +85,9 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-
     const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: signInEmail,
+      password: signInPassword,
     });
 
     if (error) {
@@ -133,9 +129,10 @@ export default function Auth() {
                   <Label htmlFor="signin-email">Email</Label>
                   <Input
                     id="signin-email"
-                    name="email"
                     type="email"
                     placeholder="your.email@example.com"
+                    value={signInEmail}
+                    onChange={(e) => setSignInEmail(e.target.value)}
                     required
                   />
                 </div>
@@ -143,8 +140,9 @@ export default function Auth() {
                   <Label htmlFor="signin-password">Password</Label>
                   <Input
                     id="signin-password"
-                    name="password"
                     type="password"
+                    value={signInPassword}
+                    onChange={(e) => setSignInPassword(e.target.value)}
                     required
                   />
                 </div>
