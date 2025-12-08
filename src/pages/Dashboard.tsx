@@ -17,6 +17,7 @@ import {
   FileText,
   FileSpreadsheet
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ComputersTab from '@/components/dashboard/ComputersTab';
 import BookingsTab from '@/components/dashboard/BookingsTab';
@@ -109,10 +110,13 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground capitalize">{userRole} Portal</p>
             </div>
           </div>
-          <Button variant="outline" onClick={handleSignOut} size="sm">
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </Button>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Button variant="outline" onClick={handleSignOut} size="sm">
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
         </div>
       </header>
 

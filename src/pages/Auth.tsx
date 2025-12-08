@@ -10,12 +10,16 @@ import { useToast } from '@/hooks/use-toast';
 import { Computer, Shield, Users, GraduationCap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ThemeToggle } from '@/components/ThemeToggle';
+
+type RoleType = 'admin' | 'lab_staff' | 'student' | null;
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   const [signInEmail, setSignInEmail] = useState('');
   const [signInPassword, setSignInPassword] = useState('');
+  const [selectedRole, setSelectedRole] = useState<RoleType>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -102,8 +106,17 @@ export default function Auth() {
     setLoading(false);
   };
 
+  const filteredUsers = selectedRole 
+    ? users.filter((u) => u.user_roles?.[0]?.role === selectedRole)
+    : [];
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-primary/5 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-primary/5 p-4 relative">
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full max-w-6xl">
         {/* Login Form */}
         <Card className="shadow-card">
@@ -193,72 +206,58 @@ export default function Auth() {
           </CardContent>
         </Card>
 
-        {/* User Lists */}
+        {/* Role Selection & User Lists */}
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Quick Login - Select User</CardTitle>
-            <CardDescription>Click on any user to fill their email</CardDescription>
+            <CardTitle>Select Your Role</CardTitle>
+            <CardDescription>Choose a role to see available users</CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[500px] pr-4">
-              <div className="space-y-6">
-                {/* Admins */}
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Shield className="w-5 h-5 text-primary" />
-                    <h3 className="font-semibold text-lg">Admins</h3>
-                    <Badge variant="default">{usersByRole.admin.length}</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {usersByRole.admin.map((user) => (
-                      <Button
-                        key={user.id}
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => handleQuickLogin(user.email)}
-                      >
-                        <div className="text-left">
-                          <div className="font-medium">{user.full_name}</div>
-                          <div className="text-xs text-muted-foreground">{user.email}</div>
-                        </div>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
+            {/* Role Selection Buttons */}
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <Button
+                variant={selectedRole === 'admin' ? 'default' : 'outline'}
+                className="flex flex-col items-center gap-2 h-auto py-4"
+                onClick={() => setSelectedRole('admin')}
+              >
+                <Shield className="w-8 h-8" />
+                <span className="font-semibold">Admin</span>
+                <Badge variant="secondary" className="text-xs">{usersByRole.admin.length}</Badge>
+              </Button>
+              <Button
+                variant={selectedRole === 'lab_staff' ? 'default' : 'outline'}
+                className="flex flex-col items-center gap-2 h-auto py-4"
+                onClick={() => setSelectedRole('lab_staff')}
+              >
+                <Users className="w-8 h-8" />
+                <span className="font-semibold">Staff</span>
+                <Badge variant="secondary" className="text-xs">{usersByRole.lab_staff.length}</Badge>
+              </Button>
+              <Button
+                variant={selectedRole === 'student' ? 'default' : 'outline'}
+                className="flex flex-col items-center gap-2 h-auto py-4"
+                onClick={() => setSelectedRole('student')}
+              >
+                <GraduationCap className="w-8 h-8" />
+                <span className="font-semibold">Student</span>
+                <Badge variant="secondary" className="text-xs">{usersByRole.student.length}</Badge>
+              </Button>
+            </div>
 
-                {/* Lab Staff */}
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Users className="w-5 h-5 text-accent" />
-                    <h3 className="font-semibold text-lg">Lab Staff</h3>
-                    <Badge variant="secondary">{usersByRole.lab_staff.length}</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {usersByRole.lab_staff.map((user) => (
-                      <Button
-                        key={user.id}
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => handleQuickLogin(user.email)}
-                      >
-                        <div className="text-left">
-                          <div className="font-medium">{user.full_name}</div>
-                          <div className="text-xs text-muted-foreground">{user.email}</div>
-                        </div>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Students */}
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <GraduationCap className="w-5 h-5 text-success" />
-                    <h3 className="font-semibold text-lg">Students</h3>
-                    <Badge variant="outline">{usersByRole.student.length}</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {usersByRole.student.map((user) => (
+            {/* User List for Selected Role */}
+            {selectedRole && (
+              <ScrollArea className="h-[350px] pr-4">
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-lg mb-3 capitalize flex items-center gap-2">
+                    {selectedRole === 'admin' && <Shield className="w-5 h-5 text-primary" />}
+                    {selectedRole === 'lab_staff' && <Users className="w-5 h-5 text-accent" />}
+                    {selectedRole === 'student' && <GraduationCap className="w-5 h-5 text-success" />}
+                    {selectedRole.replace('_', ' ')}s
+                  </h3>
+                  {filteredUsers.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">No users found for this role</p>
+                  ) : (
+                    filteredUsers.map((user) => (
                       <Button
                         key={user.id}
                         variant="outline"
@@ -273,11 +272,17 @@ export default function Auth() {
                           </div>
                         </div>
                       </Button>
-                    ))}
-                  </div>
+                    ))
+                  )}
                 </div>
+              </ScrollArea>
+            )}
+
+            {!selectedRole && (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Select a role above to view users</p>
               </div>
-            </ScrollArea>
+            )}
           </CardContent>
         </Card>
       </div>
