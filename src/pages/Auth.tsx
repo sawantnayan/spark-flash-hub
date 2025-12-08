@@ -89,7 +89,7 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data: authData, error } = await supabase.auth.signInWithPassword({
       email: signInEmail,
       password: signInPassword,
     });
@@ -100,8 +100,27 @@ export default function Auth() {
         description: error.message,
         variant: 'destructive',
       });
-    } else {
-      navigate('/dashboard');
+      setLoading(false);
+      return;
+    }
+
+    // Fetch user role and redirect accordingly
+    if (authData.user) {
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', authData.user.id)
+        .single();
+
+      const role = roleData?.role || 'student';
+      
+      if (role === 'admin') {
+        navigate('/admin');
+      } else if (role === 'lab_staff') {
+        navigate('/staff');
+      } else {
+        navigate('/student');
+      }
     }
     setLoading(false);
   };
