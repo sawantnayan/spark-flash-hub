@@ -55,7 +55,7 @@ export default function BookingsTab({ userId, isAdminOrStaff, onUpdate }: { user
     const { data } = await supabase
       .from('computers')
       .select('id, name, system_id, status')
-      .eq('status', 'available');
+      .order('name');
     if (data) setComputers(data);
   };
 
@@ -125,17 +125,26 @@ export default function BookingsTab({ userId, isAdminOrStaff, onUpdate }: { user
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="computer_id">Computer *</Label>
+                <Label htmlFor="computer_id">Select PC Number (1-30) *</Label>
                 <Select name="computer_id" required>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a computer" />
+                    <SelectValue placeholder="Select PC Number" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {computers.map((comp) => (
-                      <SelectItem key={comp.id} value={comp.id}>
-                        {comp.name} ({comp.system_id})
-                      </SelectItem>
-                    ))}
+                  <SelectContent className="max-h-[200px]">
+                    {Array.from({ length: 30 }, (_, i) => i + 1).map((pcNum) => {
+                      const matchingComputer = computers.find(
+                        (c) => c.name === `PC-${pcNum}` || c.system_id === `PC-${pcNum}` || c.name === `PC ${pcNum}`
+                      );
+                      return (
+                        <SelectItem 
+                          key={pcNum} 
+                          value={matchingComputer?.id || `pc-${pcNum}`}
+                          disabled={!matchingComputer}
+                        >
+                          PC {pcNum} {matchingComputer ? `(${matchingComputer.status})` : '(Not available)'}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
