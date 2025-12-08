@@ -125,26 +125,25 @@ export default function BookingsTab({ userId, isAdminOrStaff, onUpdate }: { user
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="computer_id">Select PC Number (1-30) *</Label>
+                <Label htmlFor="computer_id">Select PC (1-30) *</Label>
                 <Select name="computer_id" required>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select PC Number" />
+                    <SelectValue placeholder="Select a PC" />
                   </SelectTrigger>
-                  <SelectContent className="max-h-[200px]">
-                    {Array.from({ length: 30 }, (_, i) => i + 1).map((pcNum) => {
-                      const matchingComputer = computers.find(
-                        (c) => c.name === `PC-${pcNum}` || c.system_id === `PC-${pcNum}` || c.name === `PC ${pcNum}`
-                      );
-                      return (
+                  <SelectContent className="max-h-[250px] bg-popover">
+                    {computers.length === 0 ? (
+                      <SelectItem value="none" disabled>No computers available</SelectItem>
+                    ) : (
+                      computers.map((comp) => (
                         <SelectItem 
-                          key={pcNum} 
-                          value={matchingComputer?.id || `pc-${pcNum}`}
-                          disabled={!matchingComputer}
+                          key={comp.id} 
+                          value={comp.id}
+                          disabled={comp.status !== 'available'}
                         >
-                          PC {pcNum} {matchingComputer ? `(${matchingComputer.status})` : '(Not available)'}
+                          {comp.name} - {comp.status === 'available' ? '✓ Available' : `⚠ ${comp.status}`}
                         </SelectItem>
-                      );
-                    })}
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
