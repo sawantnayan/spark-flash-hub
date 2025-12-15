@@ -24,6 +24,7 @@ export default function StudentDashboard() {
     myIssues: 0,
   });
   const [profile, setProfile] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState('bookings');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -154,7 +155,7 @@ export default function StudentDashboard() {
               <Button 
                 variant="outline" 
                 className="h-auto py-4 flex flex-col gap-2"
-                onClick={() => document.querySelector('[value="bookings"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))}
+                onClick={() => setActiveTab('bookings')}
               >
                 <Calendar className="w-6 h-6 text-primary" />
                 <span>Book a PC</span>
@@ -162,7 +163,7 @@ export default function StudentDashboard() {
               <Button 
                 variant="outline" 
                 className="h-auto py-4 flex flex-col gap-2"
-                onClick={() => document.querySelector('[value="issues"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))}
+                onClick={() => setActiveTab('issues')}
               >
                 <AlertCircle className="w-6 h-6 text-warning" />
                 <span>Report Issue</span>
@@ -170,7 +171,7 @@ export default function StudentDashboard() {
               <Button 
                 variant="outline" 
                 className="h-auto py-4 flex flex-col gap-2"
-                onClick={() => document.querySelector('[value="sessions"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))}
+                onClick={() => setActiveTab('sessions')}
               >
                 <Clock className="w-6 h-6 text-accent" />
                 <span>My Sessions</span>
@@ -178,7 +179,7 @@ export default function StudentDashboard() {
               <Button 
                 variant="outline" 
                 className="h-auto py-4 flex flex-col gap-2"
-                onClick={() => document.querySelector('[value="notices"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))}
+                onClick={() => setActiveTab('notices')}
               >
                 <Megaphone className="w-6 h-6 text-destructive" />
                 <span>Lab Notices</span>
@@ -189,7 +190,7 @@ export default function StudentDashboard() {
 
         {/* Main Content Tabs */}
         <Card className="shadow-card">
-          <Tabs defaultValue="bookings" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <CardHeader className="pb-2">
               <TabsList className="flex flex-wrap gap-1 h-auto justify-start">
                 <TabsTrigger value="bookings" className="flex items-center gap-1">
