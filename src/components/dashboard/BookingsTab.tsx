@@ -38,8 +38,7 @@ export default function BookingsTab({ userId, isAdminOrStaff, onUpdate }: { user
       .from('bookings')
       .select(`
         *,
-        computers(name, system_id),
-        profiles:user_id(full_name)
+        computers(name, system_id)
       `)
       .order('start_time', { ascending: false });
     
@@ -47,8 +46,29 @@ export default function BookingsTab({ userId, isAdminOrStaff, onUpdate }: { user
       query = query.eq('user_id', userId);
     }
 
-    const { data } = await query;
-    if (data) setBookings(data as any);
+    const { data, error } = await query;
+    if (error) {
+      console.error('Error fetching bookings:', error);
+      return;
+    }
+    
+    if (data && data.length > 0 && isAdminOrStaff) {
+      // Fetch profiles separately for admin/staff view
+      const userIds = [...new Set(data.map(b => b.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      const bookingsWithProfiles = data.map(b => ({
+        ...b,
+        profiles: profileMap.get(b.user_id) || { full_name: 'Unknown' }
+      }));
+      setBookings(bookingsWithProfiles as any);
+    } else {
+      setBookings((data || []).map(b => ({ ...b, profiles: { full_name: '' } })) as any);
+    }
   };
 
   const fetchComputers = async () => {

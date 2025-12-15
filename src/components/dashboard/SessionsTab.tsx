@@ -54,24 +54,40 @@ export default function SessionsTab({ userId, isAdminOrStaff, onUpdate }: Sessio
   }, [isAdminOrStaff]);
 
   const fetchSessions = async () => {
-    const query = supabase
+    let query = supabase
       .from('session_logs')
       .select(`
         *,
-        computers(name, system_id),
-        profiles(full_name, email)
+        computers(name, system_id)
       `)
       .order('login_time', { ascending: false });
 
     if (!isAdminOrStaff) {
-      query.eq('user_id', userId);
+      query = query.eq('user_id', userId);
     }
 
     const { data, error } = await query;
     if (error) {
       toast({ title: 'Error fetching sessions', variant: 'destructive' });
+      return;
+    }
+    
+    if (data && data.length > 0) {
+      // Fetch profiles separately
+      const userIds = [...new Set(data.map(s => s.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', userIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      const sessionsWithProfiles = data.map(s => ({
+        ...s,
+        profiles: profileMap.get(s.user_id) || { full_name: 'Unknown', email: '' }
+      }));
+      setSessions(sessionsWithProfiles);
     } else {
-      setSessions(data || []);
+      setSessions([]);
     }
   };
 
