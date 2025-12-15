@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Computer, Shield, Users, GraduationCap, Eye, EyeOff } from 'lucide-react';
+import { Computer, Shield, Users, GraduationCap, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -24,11 +24,25 @@ export default function Auth() {
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [isPasswordReset, setIsPasswordReset] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     fetchUsers();
+    
+    // Check if user came from password reset link
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsPasswordReset(true);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const fetchUsers = async () => {
@@ -40,6 +54,48 @@ export default function Auth() {
       `)
       .order('full_name');
     setUsers(data || []);
+  };
+
+  const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: 'Error',
+        description: 'Passwords do not match',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: 'Error',
+        description: 'Password must be at least 6 characters',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Success',
+        description: 'Your password has been updated successfully!',
+      });
+      setIsPasswordReset(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    }
+    setLoading(false);
   };
 
   const usersByRole = {
@@ -171,13 +227,92 @@ export default function Auth() {
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-primary/80">
-              <Computer className="w-8 h-8 text-primary-foreground" />
+              {isPasswordReset ? (
+                <KeyRound className="w-8 h-8 text-primary-foreground" />
+              ) : (
+                <Computer className="w-8 h-8 text-primary-foreground" />
+              )}
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Computer Lab Management</CardTitle>
-          <CardDescription>Sign in to manage your lab resources</CardDescription>
+          <CardTitle className="text-2xl font-bold">
+            {isPasswordReset ? 'Reset Your Password' : 'Computer Lab Management'}
+          </CardTitle>
+          <CardDescription>
+            {isPasswordReset ? 'Enter your new password below' : 'Sign in to manage your lab resources'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
+          {isPasswordReset ? (
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">New Password</Label>
+                <div className="relative">
+                  <Input
+                    id="new-password"
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="pr-10"
+                    placeholder="Enter new password"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirm-password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="pr-10"
+                    placeholder="Confirm new password"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Updating...' : 'Update Password'}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => setIsPasswordReset(false)}
+              >
+                Back to Sign In
+              </Button>
+            </form>
+          ) : (
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -318,8 +453,9 @@ export default function Auth() {
               </form>
             </TabsContent>
           </Tabs>
-          </CardContent>
-        </Card>
+          )}
+        </CardContent>
+      </Card>
 
         {/* Role Selection & User Lists */}
         <Card className="shadow-lg">
