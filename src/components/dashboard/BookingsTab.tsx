@@ -34,12 +34,22 @@ export default function BookingsTab({ userId, isAdminOrStaff, onUpdate }: { user
   }, [userId]);
 
   const fetchBookings = async () => {
+    const now = new Date().toISOString();
+    
+    // First, mark expired bookings as completed
+    await supabase
+      .from('bookings')
+      .update({ status: 'completed' as const })
+      .lt('end_time', now)
+      .in('status', ['pending', 'confirmed']);
+    
     let query = supabase
       .from('bookings')
       .select(`
         *,
         computers(name, system_id)
       `)
+      .in('status', ['pending', 'confirmed']) // Only show active bookings
       .order('start_time', { ascending: false });
     
     if (!isAdminOrStaff) {
@@ -83,12 +93,20 @@ export default function BookingsTab({ userId, isAdminOrStaff, onUpdate }: { user
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
+    const startTime = new Date(formData.get('start_time') as string);
+    const endTime = new Date(formData.get('end_time') as string);
+    const computerId = formData.get('computer_id') as string;
+    const purpose = formData.get('purpose') as string;
+    
+    // Get computer name for notification
+    const computer = computers.find(c => c.id === computerId);
+    
     const bookingData = {
       user_id: userId,
-      computer_id: formData.get('computer_id') as string,
-      start_time: new Date(formData.get('start_time') as string).toISOString(),
-      end_time: new Date(formData.get('end_time') as string).toISOString(),
-      purpose: formData.get('purpose') as string,
+      computer_id: computerId,
+      start_time: startTime.toISOString(),
+      end_time: endTime.toISOString(),
+      purpose: purpose,
       status: 'pending' as const,
     };
 
@@ -97,6 +115,16 @@ export default function BookingsTab({ userId, isAdminOrStaff, onUpdate }: { user
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
+      // Create a notification for 5 minutes before the booking
+      const notificationTime = new Date(startTime.getTime() - 5 * 60 * 1000);
+      await supabase.from('notifications').insert([{
+        user_id: userId,
+        title: 'Upcoming Booking Reminder',
+        message: `Your booking for ${computer?.name || 'computer'} starts in 5 minutes at ${format(startTime, 'p')}`,
+        type: 'booking_reminder',
+        metadata: { start_time: startTime.toISOString(), computer_name: computer?.name }
+      }]);
+      
       toast({ title: 'Success', description: 'Booking created successfully' });
       setOpen(false);
       fetchBookings();
