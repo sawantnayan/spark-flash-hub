@@ -34,15 +34,36 @@ export default function IssuesTab({ userId, isAdminOrStaff, onUpdate }: { userId
   }, [userId]);
 
   const fetchIssues = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('issues')
       .select(`
         *,
-        computers(name, system_id),
-        profiles:reported_by(full_name)
+        computers(name, system_id)
       `)
       .order('created_at', { ascending: false });
-    if (data) setIssues(data as any);
+    
+    if (error) {
+      console.error('Error fetching issues:', error);
+      return;
+    }
+    
+    if (data && data.length > 0) {
+      // Fetch profiles separately to avoid foreign key join issues
+      const reporterIds = [...new Set(data.map(i => i.reported_by))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', reporterIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      const issuesWithProfiles = data.map(i => ({
+        ...i,
+        profiles: profileMap.get(i.reported_by) || { full_name: 'Unknown' }
+      }));
+      setIssues(issuesWithProfiles as any);
+    } else {
+      setIssues([]);
+    }
   };
 
   const fetchComputers = async () => {
