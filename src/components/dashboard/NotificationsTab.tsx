@@ -57,11 +57,17 @@ export default function NotificationsTab({ userId, isAdminOrStaff }: Notificatio
   }, [userId, isAdminOrStaff]);
 
   const fetchNotifications = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('notifications')
       .select('*')
-      .eq('user_id', userId)
       .order('created_at', { ascending: false });
+    
+    // Admin/staff can view all notifications, users view only their own
+    if (!isAdminOrStaff) {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       toast({ title: 'Error fetching notifications', variant: 'destructive' });
@@ -114,17 +120,38 @@ export default function NotificationsTab({ userId, isAdminOrStaff }: Notificatio
       return;
     }
 
-    const { error } = await supabase
-      .from('notifications')
-      .insert([newNotification]);
-
-    if (error) {
-      toast({ title: 'Error creating notification', variant: 'destructive' });
+    // If "all" is selected, send to all users
+    if (newNotification.user_id === 'all') {
+      const notifications = users.map(user => ({
+        user_id: user.id,
+        type: newNotification.type,
+        title: newNotification.title,
+        message: newNotification.message,
+      }));
+      
+      const { error } = await supabase.from('notifications').insert(notifications);
+      
+      if (error) {
+        toast({ title: 'Error creating notifications', variant: 'destructive' });
+      } else {
+        toast({ title: `Notification sent to ${users.length} users` });
+        setIsAddOpen(false);
+        setNewNotification({ user_id: '', type: 'system', title: '', message: '' });
+        fetchNotifications();
+      }
     } else {
-      toast({ title: 'Notification created successfully' });
-      setIsAddOpen(false);
-      setNewNotification({ user_id: '', type: 'system', title: '', message: '' });
-      fetchNotifications();
+      const { error } = await supabase
+        .from('notifications')
+        .insert([newNotification]);
+
+      if (error) {
+        toast({ title: 'Error creating notification', variant: 'destructive' });
+      } else {
+        toast({ title: 'Notification created successfully' });
+        setIsAddOpen(false);
+        setNewNotification({ user_id: '', type: 'system', title: '', message: '' });
+        fetchNotifications();
+      }
     }
   };
 
@@ -171,6 +198,9 @@ export default function NotificationsTab({ userId, isAdminOrStaff }: Notificatio
                       <SelectValue placeholder="Select user" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="all" className="font-semibold text-primary">
+                        📢 Send to All Users
+                      </SelectItem>
                       {users.map((user) => (
                         <SelectItem key={user.id} value={user.id}>
                           {user.full_name} ({user.email})

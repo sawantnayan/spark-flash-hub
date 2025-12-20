@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Link, AlertCircle } from 'lucide-react';
+import { Plus, Link, AlertCircle, Trash2 } from 'lucide-react';
 import { format, isBefore, addDays } from 'date-fns';
 
 interface SoftwareTabProps {
@@ -130,6 +130,20 @@ export default function SoftwareTab({ isAdminOrStaff, onUpdate }: SoftwareTabPro
       setSelectedSoftware('');
       setSelectedComputer('');
       fetchSoftware();
+    }
+  };
+
+  const handleDeleteSoftware = async (softwareId: string) => {
+    // First delete computer_software relationships
+    await supabase.from('computer_software').delete().eq('software_id', softwareId);
+    
+    const { error } = await supabase.from('software').delete().eq('id', softwareId);
+    if (error) {
+      toast({ title: 'Error deleting software', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Software deleted successfully' });
+      fetchSoftware();
+      onUpdate();
     }
   };
 
@@ -278,6 +292,7 @@ export default function SoftwareTab({ isAdminOrStaff, onUpdate }: SoftwareTabPro
               <TableHead>Version</TableHead>
               <TableHead>License Expiry</TableHead>
               <TableHead>Assigned To</TableHead>
+              {isAdminOrStaff && <TableHead>Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -321,6 +336,17 @@ export default function SoftwareTab({ isAdminOrStaff, onUpdate }: SoftwareTabPro
                     '-'
                   )}
                 </TableCell>
+                {isAdminOrStaff && (
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteSoftware(sw.id)}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>

@@ -57,10 +57,15 @@ export default function LabNoticesTab({ userId, isAdminOrStaff }: LabNoticesTabP
   }, []);
 
   const fetchNotices = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('lab_notices')
       .select('*')
       .order('created_at', { ascending: false });
+    
+    // Admin and staff can see all notices, others only see active ones
+    // Note: RLS policy already filters for non-admin users
+
+    const { data, error } = await query;
 
     if (error) {
       toast({ title: 'Error fetching notices', variant: 'destructive' });

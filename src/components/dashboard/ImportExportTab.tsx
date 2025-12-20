@@ -80,24 +80,57 @@ export default function ImportExportTab({ isAdminOrStaff, userId }: ImportExport
           filename = 'software';
           break;
         case 'bookings':
-          const { data: bookings } = await supabase
+          const { data: bookingsRaw } = await supabase
             .from('bookings')
-            .select('*, computers(name, system_id), profiles(full_name, email)');
-          data = bookings || [];
+            .select('*, computers(name, system_id)');
+          if (bookingsRaw && bookingsRaw.length > 0) {
+            const userIds = [...new Set(bookingsRaw.map(b => b.user_id))];
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id, full_name, email')
+              .in('id', userIds);
+            const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+            data = bookingsRaw.map(b => ({
+              ...b,
+              profiles: profileMap.get(b.user_id) || { full_name: 'Unknown', email: '' }
+            }));
+          }
           filename = 'bookings';
           break;
         case 'issues':
-          const { data: issues } = await supabase
+          const { data: issuesRaw } = await supabase
             .from('issues')
-            .select('*, computers(name, system_id), profiles(full_name, email)');
-          data = issues || [];
+            .select('*, computers(name, system_id)');
+          if (issuesRaw && issuesRaw.length > 0) {
+            const reporterIds = [...new Set(issuesRaw.map(i => i.reported_by))];
+            const { data: issueProfiles } = await supabase
+              .from('profiles')
+              .select('id, full_name, email')
+              .in('id', reporterIds);
+            const issueProfileMap = new Map(issueProfiles?.map(p => [p.id, p]) || []);
+            data = issuesRaw.map(i => ({
+              ...i,
+              profiles: issueProfileMap.get(i.reported_by) || { full_name: 'Unknown', email: '' }
+            }));
+          }
           filename = 'issues';
           break;
         case 'sessions':
-          const { data: sessions } = await supabase
+          const { data: sessionsRaw } = await supabase
             .from('session_logs')
-            .select('*, computers(name, system_id), profiles(full_name, email)');
-          data = sessions || [];
+            .select('*, computers(name, system_id)');
+          if (sessionsRaw && sessionsRaw.length > 0) {
+            const sessionUserIds = [...new Set(sessionsRaw.map(s => s.user_id))];
+            const { data: sessionProfiles } = await supabase
+              .from('profiles')
+              .select('id, full_name, email')
+              .in('id', sessionUserIds);
+            const sessionProfileMap = new Map(sessionProfiles?.map(p => [p.id, p]) || []);
+            data = sessionsRaw.map(s => ({
+              ...s,
+              profiles: sessionProfileMap.get(s.user_id) || { full_name: 'Unknown', email: '' }
+            }));
+          }
           filename = 'session_logs';
           break;
       }

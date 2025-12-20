@@ -6,8 +6,19 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Monitor } from 'lucide-react';
+import { Plus, Edit, Monitor, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface Computer {
   id: string;
@@ -80,6 +91,21 @@ export default function ComputersTab({ isAdminOrStaff, onUpdate }: { isAdminOrSt
         fetchComputers();
         onUpdate();
       }
+    }
+  };
+
+  const handleDelete = async (computerId: string) => {
+    const { error } = await supabase
+      .from('computers')
+      .delete()
+      .eq('id', computerId);
+    
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: 'Computer deleted successfully' });
+      fetchComputers();
+      onUpdate();
     }
   };
 
@@ -184,13 +210,36 @@ export default function ComputersTab({ isAdminOrStaff, onUpdate }: { isAdminOrSt
                 </div>
               </div>
               {isAdminOrStaff && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => { setEditingComputer(computer); setOpen(true); }}
-                >
-                  <Edit className="w-4 h-4" />
-                </Button>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setEditingComputer(computer); setOpen(true); }}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Computer?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete {computer.name}. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(computer.id)}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               )}
             </div>
             <div className="space-y-2 text-sm">
