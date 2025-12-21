@@ -9,12 +9,12 @@ import {
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
 import BookingsTab from '@/components/dashboard/BookingsTab';
 import IssuesTab from '@/components/dashboard/IssuesTab';
 import SessionsTab from '@/components/dashboard/SessionsTab';
 import NotificationsTab from '@/components/dashboard/NotificationsTab';
 import LabNoticesTab from '@/components/dashboard/LabNoticesTab';
-
 export default function StudentDashboard() {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -94,6 +94,7 @@ export default function StudentDashboard() {
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
+            <DeleteAccountDialog userEmail={user?.email} />
             <Button variant="outline" onClick={handleSignOut} size="sm">
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out

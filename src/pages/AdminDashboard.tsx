@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
 import ComputersTab from '@/components/dashboard/ComputersTab';
 import BookingsTab from '@/components/dashboard/BookingsTab';
 import IssuesTab from '@/components/dashboard/IssuesTab';
@@ -93,6 +94,7 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
+            <DeleteAccountDialog userEmail={user?.email} />
             <Button variant="outline" onClick={handleSignOut} size="sm">
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out
