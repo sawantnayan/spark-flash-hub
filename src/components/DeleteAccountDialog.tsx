@@ -41,39 +41,30 @@ export function DeleteAccountDialog({ userEmail }: DeleteAccountDialogProps) {
 
     setIsDeleting(true);
     try {
-      // Sign out the user (this will invalidate their session)
-      // Note: Full account deletion requires admin API access
-      // For now, we'll delete user data and sign them out
-      const { data: { user } } = await supabase.auth.getUser();
+      // Call edge function to fully delete user account
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (user) {
-        // Delete user's notifications
-        await supabase.from('notifications').delete().eq('user_id', user.id);
-        
-        // Delete user's bookings
-        await supabase.from('bookings').delete().eq('user_id', user.id);
-        
-        // Delete user's session logs
-        await supabase.from('session_logs').delete().eq('user_id', user.id);
-        
-        // Delete user's issues (reported by them)
-        await supabase.from('issues').delete().eq('reported_by', user.id);
-        
-        // Delete user's profile
-        await supabase.from('profiles').delete().eq('id', user.id);
-        
-        // Delete user's role
-        await supabase.from('user_roles').delete().eq('user_id', user.id);
+      if (!session) {
+        throw new Error('No active session');
       }
 
-      // Sign out the user
-      await supabase.auth.signOut();
-      
+      const response = await supabase.functions.invoke('delete-account', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to delete account');
+      }
+
       toast({
         title: 'Account deleted',
-        description: 'Your account data has been removed. You have been signed out.',
+        description: 'Your account has been permanently deleted.',
       });
       
+      // Clear local session and redirect
+      await supabase.auth.signOut();
       navigate('/auth');
     } catch (error: any) {
       toast({
