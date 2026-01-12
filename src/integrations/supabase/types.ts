@@ -234,6 +234,59 @@ export type Database = {
         }
         Relationships: []
       }
+      maintenance_logs: {
+        Row: {
+          completed_at: string | null
+          computer_id: string
+          cost: number | null
+          created_at: string
+          description: string
+          id: string
+          maintenance_type: string
+          notes: string | null
+          parts_replaced: string | null
+          performed_by: string
+          started_at: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          computer_id: string
+          cost?: number | null
+          created_at?: string
+          description: string
+          id?: string
+          maintenance_type: string
+          notes?: string | null
+          parts_replaced?: string | null
+          performed_by: string
+          started_at?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          computer_id?: string
+          cost?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          maintenance_type?: string
+          notes?: string | null
+          parts_replaced?: string | null
+          performed_by?: string
+          started_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_logs_computer_id_fkey"
+            columns: ["computer_id"]
+            isOneToOne: false
+            referencedRelation: "computers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string | null
