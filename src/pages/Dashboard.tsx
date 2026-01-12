@@ -15,7 +15,9 @@ import {
   Bell,
   Megaphone,
   FileText,
-  FileSpreadsheet
+  FileSpreadsheet,
+  AlarmClock,
+  Wrench
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,6 +31,8 @@ import NotificationsTab from '@/components/dashboard/NotificationsTab';
 import LabNoticesTab from '@/components/dashboard/LabNoticesTab';
 import ReportsTab from '@/components/dashboard/ReportsTab';
 import ImportExportTab from '@/components/dashboard/ImportExportTab';
+import RemindersTab from '@/components/dashboard/RemindersTab';
+import MaintenanceHistoryTab from '@/components/dashboard/MaintenanceHistoryTab';
 
 export default function Dashboard() {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -182,7 +186,7 @@ export default function Dashboard() {
         <Card className="shadow-card">
           <Tabs defaultValue="computers" className="w-full">
             <CardHeader>
-              <TabsList className="grid w-full grid-cols-6 lg:grid-cols-10">
+              <TabsList className="grid w-full grid-cols-6 lg:grid-cols-12">
                 <TabsTrigger value="computers">
                   <Computer className="w-4 h-4 mr-2" />
                   Computers
@@ -206,6 +210,14 @@ export default function Dashboard() {
                 <TabsTrigger value="users">
                   <Users className="w-4 h-4 mr-2" />
                   Users
+                </TabsTrigger>
+                <TabsTrigger value="reminders">
+                  <AlarmClock className="w-4 h-4 mr-2" />
+                  Reminders
+                </TabsTrigger>
+                <TabsTrigger value="maintenance">
+                  <Wrench className="w-4 h-4 mr-2" />
+                  Maintenance
                 </TabsTrigger>
                 <TabsTrigger value="notifications">
                   <Bell className="w-4 h-4 mr-2" />
@@ -243,6 +255,12 @@ export default function Dashboard() {
               </TabsContent>
               <TabsContent value="users" className="mt-0">
                 <UsersTab isAdminOrStaff={isAdminOrStaff} />
+              </TabsContent>
+              <TabsContent value="reminders" className="mt-0">
+                <RemindersTab userId={user?.id || ''} isAdminOrStaff={isAdminOrStaff} />
+              </TabsContent>
+              <TabsContent value="maintenance" className="mt-0">
+                <MaintenanceHistoryTab userId={user?.id || ''} isAdminOrStaff={isAdminOrStaff} onUpdate={fetchStats} />
               </TabsContent>
               <TabsContent value="notifications" className="mt-0">
                 <NotificationsTab userId={user?.id || ''} isAdminOrStaff={isAdminOrStaff} />

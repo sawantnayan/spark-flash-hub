@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, Download, Calendar } from 'lucide-react';
+import { FileText, Download, Calendar, Monitor, Package } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import {
   BarChart,
@@ -21,9 +21,23 @@ import {
 } from 'recharts';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ReportsTabProps {
   isAdminOrStaff: boolean;
+}
+
+interface SoftwareUsage {
+  name: string;
+  installations: number;
+  vendor: string;
+}
+
+interface SystemUsage {
+  name: string;
+  hours: number;
+  sessions: number;
+  system_id: string;
 }
 
 export default function ReportsTab({ isAdminOrStaff }: ReportsTabProps) {
@@ -31,6 +45,8 @@ export default function ReportsTab({ isAdminOrStaff }: ReportsTabProps) {
   const [issueData, setIssueData] = useState<any[]>([]);
   const [usageData, setUsageData] = useState<any[]>([]);
   const [computerStats, setComputerStats] = useState<any[]>([]);
+  const [softwareUsage, setSoftwareUsage] = useState<SoftwareUsage[]>([]);
+  const [topSystems, setTopSystems] = useState<SystemUsage[]>([]);
   const [dateRange, setDateRange] = useState({
     start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0],
@@ -41,7 +57,17 @@ export default function ReportsTab({ isAdminOrStaff }: ReportsTabProps) {
   }, [dateRange]);
 
   const fetchReportData = async () => {
-    // Fetch booking trends
+    await Promise.all([
+      fetchBookingTrends(),
+      fetchIssueDistribution(),
+      fetchSessionUsage(),
+      fetchComputerStats(),
+      fetchSoftwareUsage(),
+      fetchTopSystems(),
+    ]);
+  };
+
+  const fetchBookingTrends = async () => {
     const { data: bookings } = await supabase
       .from('bookings')
       .select('created_at, status')
@@ -59,8 +85,9 @@ export default function ReportsTab({ isAdminOrStaff }: ReportsTabProps) {
       }, {});
       setBookingData(Object.values(grouped));
     }
+  };
 
-    // Fetch issue distribution
+  const fetchIssueDistribution = async () => {
     const { data: issues } = await supabase
       .from('issues')
       .select('status')
@@ -78,8 +105,9 @@ export default function ReportsTab({ isAdminOrStaff }: ReportsTabProps) {
       }));
       setIssueData(issueChartData);
     }
+  };
 
-    // Fetch session usage data
+  const fetchSessionUsage = async () => {
     const { data: sessions } = await supabase
       .from('session_logs')
       .select('computer_id, duration_minutes, login_time')
@@ -101,10 +129,11 @@ export default function ReportsTab({ isAdminOrStaff }: ReportsTabProps) {
         hours: Math.round(data.total / 60),
         sessions: data.count,
       }));
-      setUsageData(usageChartData.slice(0, 10)); // Top 10 computers
+      setUsageData(usageChartData.slice(0, 10));
     }
+  };
 
-    // Fetch computer status stats
+  const fetchComputerStats = async () => {
     const { data: computers } = await supabase
       .from('computers')
       .select('status');
@@ -119,6 +148,69 @@ export default function ReportsTab({ isAdminOrStaff }: ReportsTabProps) {
         count,
       }));
       setComputerStats(computerChartData);
+    }
+  };
+
+  const fetchSoftwareUsage = async () => {
+    const { data } = await supabase
+      .from('software')
+      .select(`
+        id,
+        name,
+        vendor,
+        computer_software(id)
+      `)
+      .order('name');
+
+    if (data) {
+      const softwareData: SoftwareUsage[] = data.map((sw: any) => ({
+        name: sw.name,
+        vendor: sw.vendor || 'Unknown',
+        installations: sw.computer_software?.length || 0,
+      }));
+      setSoftwareUsage(softwareData.sort((a, b) => b.installations - a.installations).slice(0, 10));
+    }
+  };
+
+  const fetchTopSystems = async () => {
+    const { data: sessions } = await supabase
+      .from('session_logs')
+      .select(`
+        computer_id,
+        duration_minutes,
+        computers(name, system_id)
+      `)
+      .gte('login_time', dateRange.start)
+      .lte('login_time', dateRange.end);
+
+    if (sessions) {
+      const computerUsage: Record<string, { hours: number; sessions: number; name: string; system_id: string }> = {};
+      
+      sessions.forEach((session: any) => {
+        const compId = session.computer_id;
+        if (!computerUsage[compId]) {
+          computerUsage[compId] = {
+            hours: 0,
+            sessions: 0,
+            name: session.computers?.name || 'Unknown',
+            system_id: session.computers?.system_id || '',
+          };
+        }
+        computerUsage[compId].hours += (session.duration_minutes || 0) / 60;
+        computerUsage[compId].sessions++;
+      });
+
+      const topSystemsData: SystemUsage[] = Object.entries(computerUsage)
+        .map(([_, data]) => ({
+          name: data.name,
+          hours: Math.round(data.hours),
+          sessions: data.sessions,
+          system_id: data.system_id,
+        }))
+        .sort((a, b) => b.hours - a.hours)
+        .slice(0, 10);
+      
+      setTopSystems(topSystemsData);
     }
   };
 
@@ -288,11 +380,14 @@ export default function ReportsTab({ isAdminOrStaff }: ReportsTabProps) {
       {/* Computer Usage Statistics */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Top 10 Most Used Computers</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Monitor className="w-5 h-5" />
+            Top 10 Most Used Systems
+          </CardTitle>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => exportToCSV(usageData, 'computer_usage')}
+            onClick={() => exportToCSV(topSystems, 'top_systems_usage')}
           >
             <Download className="w-4 h-4 mr-2" />
             Export
@@ -300,14 +395,44 @@ export default function ReportsTab({ isAdminOrStaff }: ReportsTabProps) {
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={usageData}>
+            <BarChart data={topSystems}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="computer" />
+              <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
               <Legend />
               <Bar dataKey="hours" fill="hsl(var(--primary))" name="Usage Hours" />
               <Bar dataKey="sessions" fill="hsl(var(--accent))" name="Sessions" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Software Usage */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Package className="w-5 h-5" />
+            Top 10 Most Installed Software
+          </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => exportToCSV(softwareUsage, 'software_usage')}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={softwareUsage} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis type="number" />
+              <YAxis dataKey="name" type="category" width={120} />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="installations" fill="hsl(var(--primary))" name="Installations" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
