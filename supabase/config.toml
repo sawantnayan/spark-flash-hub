@@ -1,1 +1,7 @@
 project_id = "xworhgopytabzldmvkry"
+
+[functions.delete-account]
+verify_jwt = false
+
+[functions.cleanup-old-issues]
+verify_jwt = false
