@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,19 +7,17 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Computer, Shield, Users, GraduationCap, Eye, EyeOff, KeyRound } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Computer, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-type RoleType = 'admin' | 'lab_staff' | 'student' | null;
+type RoleType = 'admin' | 'lab_staff' | 'student';
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
-  const [users, setUsers] = useState<any[]>([]);
   const [signInEmail, setSignInEmail] = useState('');
   const [signInPassword, setSignInPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<RoleType>(null);
+  const [signUpRole, setSignUpRole] = useState<RoleType>('student');
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
@@ -33,8 +31,6 @@ export default function Auth() {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchUsers();
-    
     // Check if user came from password reset link
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
@@ -44,17 +40,6 @@ export default function Auth() {
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const fetchUsers = async () => {
-    const { data } = await supabase
-      .from('profiles')
-      .select(`
-        *,
-        user_roles(role)
-      `)
-      .order('full_name');
-    setUsers(data || []);
-  };
 
   const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -98,18 +83,6 @@ export default function Auth() {
     setLoading(false);
   };
 
-  const usersByRole = {
-    admin: users.filter((u) => u.user_roles?.[0]?.role === 'admin'),
-    lab_staff: users.filter((u) => u.user_roles?.[0]?.role === 'lab_staff'),
-    student: users.filter((u) => u.user_roles?.[0]?.role === 'student'),
-  };
-
-  const handleQuickLogin = (userEmail: string) => {
-    setSignInEmail(userEmail);
-    setSignInPassword('');
-    toast({ title: 'Email filled', description: 'Enter password to login' });
-  };
-
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -119,13 +92,14 @@ export default function Auth() {
     const password = formData.get('password') as string;
     const fullName = formData.get('fullName') as string;
 
-    const { error } = await supabase.auth.signUp({
+    const { data: authData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
         data: {
           full_name: fullName,
+          role: signUpRole,
         },
       },
     });
@@ -136,6 +110,26 @@ export default function Auth() {
         description: error.message,
         variant: 'destructive',
       });
+      setLoading(false);
+      return;
+    }
+
+    // If signup is successful and user is confirmed (email confirmation disabled)
+    if (authData.user && authData.session) {
+      // Insert user role
+      await supabase.from('user_roles').insert({
+        user_id: authData.user.id,
+        role: signUpRole,
+      });
+
+      // Redirect based on selected role
+      if (signUpRole === 'admin') {
+        navigate('/admin');
+      } else if (signUpRole === 'lab_staff') {
+        navigate('/staff');
+      } else {
+        navigate('/student');
+      }
     } else {
       toast({
         title: 'Success',
@@ -210,10 +204,6 @@ export default function Auth() {
     setLoading(false);
   };
 
-  const filteredUsers = selectedRole 
-    ? users.filter((u) => u.user_roles?.[0]?.role === selectedRole)
-    : [];
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-primary/5 p-4 relative">
       {/* Theme Toggle */}
@@ -221,9 +211,7 @@ export default function Auth() {
         <ThemeToggle />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full max-w-6xl">
-        {/* Login Form */}
-        <Card className="shadow-card">
+      <Card className="shadow-card w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-primary/80">
@@ -447,6 +435,19 @@ export default function Auth() {
                     </Button>
                   </div>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-role">Role</Label>
+                  <Select value={signUpRole} onValueChange={(value: RoleType) => setSignUpRole(value)}>
+                    <SelectTrigger id="signup-role">
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="lab_staff">Lab Staff</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Creating account...' : 'Create Account'}
                 </Button>
@@ -456,87 +457,6 @@ export default function Auth() {
           )}
         </CardContent>
       </Card>
-
-        {/* Role Selection & User Lists */}
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>Select Your Role</CardTitle>
-            <CardDescription>Choose a role to see available users</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Role Selection Buttons */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              <Button
-                variant={selectedRole === 'admin' ? 'default' : 'outline'}
-                className="flex flex-col items-center gap-2 h-auto py-4"
-                onClick={() => setSelectedRole('admin')}
-              >
-                <Shield className="w-8 h-8" />
-                <span className="font-semibold">Admin</span>
-                <Badge variant="secondary" className="text-xs">{usersByRole.admin.length}</Badge>
-              </Button>
-              <Button
-                variant={selectedRole === 'lab_staff' ? 'default' : 'outline'}
-                className="flex flex-col items-center gap-2 h-auto py-4"
-                onClick={() => setSelectedRole('lab_staff')}
-              >
-                <Users className="w-8 h-8" />
-                <span className="font-semibold">Staff</span>
-                <Badge variant="secondary" className="text-xs">{usersByRole.lab_staff.length}</Badge>
-              </Button>
-              <Button
-                variant={selectedRole === 'student' ? 'default' : 'outline'}
-                className="flex flex-col items-center gap-2 h-auto py-4"
-                onClick={() => setSelectedRole('student')}
-              >
-                <GraduationCap className="w-8 h-8" />
-                <span className="font-semibold">Student</span>
-                <Badge variant="secondary" className="text-xs">{usersByRole.student.length}</Badge>
-              </Button>
-            </div>
-
-            {/* User List for Selected Role */}
-            {selectedRole && (
-              <ScrollArea className="h-[350px] pr-4">
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-lg mb-3 capitalize flex items-center gap-2">
-                    {selectedRole === 'admin' && <Shield className="w-5 h-5 text-primary" />}
-                    {selectedRole === 'lab_staff' && <Users className="w-5 h-5 text-accent" />}
-                    {selectedRole === 'student' && <GraduationCap className="w-5 h-5 text-success" />}
-                    {selectedRole.replace('_', ' ')}s
-                  </h3>
-                  {filteredUsers.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-4">No users found for this role</p>
-                  ) : (
-                    filteredUsers.map((user) => (
-                      <Button
-                        key={user.id}
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => handleQuickLogin(user.email)}
-                      >
-                        <div className="text-left">
-                          <div className="font-medium">{user.full_name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {user.email}
-                            {user.student_id && ` • ${user.student_id}`}
-                          </div>
-                        </div>
-                      </Button>
-                    ))
-                  )}
-                </div>
-              </ScrollArea>
-            )}
-
-            {!selectedRole && (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Select a role above to view users</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }
