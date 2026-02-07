@@ -38,18 +38,31 @@ export default function UsersTab({ isAdminOrStaff }: UsersTabProps) {
   }, []);
 
   const fetchUsers = async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select(`
-        *,
-        user_roles(id, role)
-      `)
-      .order('full_name');
+    try {
+      // Fetch profiles and roles separately to avoid join issues
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('full_name');
 
-    if (error) {
-      toast({ title: 'Error fetching users', variant: 'destructive' });
-    } else {
-      setUsers(data || []);
+      if (profilesError) throw profilesError;
+
+      const { data: roles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('id, user_id, role');
+
+      if (rolesError) throw rolesError;
+
+      // Combine profiles with their roles
+      const usersWithRoles = (profiles || []).map(profile => ({
+        ...profile,
+        user_roles: roles?.filter(r => r.user_id === profile.id) || []
+      }));
+
+      setUsers(usersWithRoles);
+    } catch (error: any) {
+      console.error('Error fetching users:', error);
+      toast({ title: 'Error fetching users', description: error.message, variant: 'destructive' });
     }
   };
 

@@ -25,6 +25,7 @@ import ImportExportTab from '@/components/dashboard/ImportExportTab';
 export default function AdminDashboard() {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState({
     totalComputers: 0,
     availableComputers: 0,
@@ -43,8 +44,18 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (user) {
       fetchStats();
+      fetchProfile();
     }
   }, [user]);
+
+  const fetchProfile = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user?.id)
+      .single();
+    if (data) setProfile(data);
+  };
 
   const fetchStats = async () => {
     const [computers, bookings, issues, users, software] = await Promise.all([
@@ -89,7 +100,9 @@ export default function AdminDashboard() {
             </div>
             <div>
               <h1 className="text-xl font-bold">Admin Dashboard</h1>
-              <p className="text-sm text-muted-foreground">Full System Access</p>
+              <p className="text-sm text-muted-foreground">
+                Welcome, {profile?.full_name || 'Admin'}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
