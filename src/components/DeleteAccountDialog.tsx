@@ -13,8 +13,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -23,22 +21,12 @@ interface DeleteAccountDialogProps {
 }
 
 export function DeleteAccountDialog({ userEmail }: DeleteAccountDialogProps) {
-  const [confirmText, setConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleDeleteAccount = async () => {
-    if (confirmText !== 'DELETE') {
-      toast({
-        title: 'Confirmation required',
-        description: 'Please type DELETE to confirm account deletion.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     setIsDeleting(true);
     try {
       // Call edge function to fully delete user account
@@ -91,8 +79,7 @@ export function DeleteAccountDialog({ userEmail }: DeleteAccountDialogProps) {
           <AlertDialogTitle>Delete Account</AlertDialogTitle>
           <AlertDialogDescription className="space-y-2">
             <p>
-              This action cannot be undone. This will permanently delete your account
-              and remove all your data from our servers.
+              Are you sure you want to delete your account? This action cannot be undone.
             </p>
             {userEmail && (
               <p className="font-medium text-foreground">
@@ -100,32 +87,18 @@ export function DeleteAccountDialog({ userEmail }: DeleteAccountDialogProps) {
               </p>
             )}
             <p className="text-destructive font-medium">
-              All your bookings, issues, sessions, and notifications will be deleted.
+              All your bookings, issues, sessions, and notifications will be permanently deleted.
             </p>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="py-4">
-          <Label htmlFor="confirm-delete" className="text-sm font-medium">
-            Type <span className="font-bold text-destructive">DELETE</span> to confirm
-          </Label>
-          <Input
-            id="confirm-delete"
-            value={confirmText}
-            onChange={(e) => setConfirmText(e.target.value)}
-            placeholder="Type DELETE"
-            className="mt-2"
-          />
-        </div>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setConfirmText('')}>
-            Cancel
-          </AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDeleteAccount}
-            disabled={confirmText !== 'DELETE' || isDeleting}
+            disabled={isDeleting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isDeleting ? 'Deleting...' : 'Delete Account'}
+            {isDeleting ? 'Deleting...' : 'Yes, Delete My Account'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

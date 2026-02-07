@@ -116,12 +116,7 @@ export default function Auth() {
 
     // If signup is successful and user is confirmed (email confirmation disabled)
     if (authData.user && authData.session) {
-      // Insert user role
-      await supabase.from('user_roles').insert({
-        user_id: authData.user.id,
-        role: signUpRole,
-      });
-
+      // Role is automatically assigned by the handle_new_user trigger using the metadata
       // Redirect based on selected role
       if (signUpRole === 'admin') {
         navigate('/admin');
