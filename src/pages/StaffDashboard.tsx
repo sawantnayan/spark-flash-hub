@@ -28,6 +28,7 @@ export default function StaffDashboard() {
     activeBookings: 0,
     pendingIssues: 0,
   });
+  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -38,8 +39,18 @@ export default function StaffDashboard() {
   useEffect(() => {
     if (user) {
       fetchStats();
+      fetchProfile();
     }
   }, [user]);
+
+  const fetchProfile = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user?.id)
+      .single();
+    if (data) setProfile(data);
+  };
 
   const fetchStats = async () => {
     const [computers, bookings, issues] = await Promise.all([
@@ -80,7 +91,9 @@ export default function StaffDashboard() {
             </div>
             <div>
               <h1 className="text-xl font-bold">Staff Dashboard</h1>
-              <p className="text-sm text-muted-foreground">Lab Management Portal</p>
+              <p className="text-sm text-muted-foreground">
+                Welcome, {profile?.full_name || 'Staff Member'}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
