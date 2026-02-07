@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
-  Computer, Calendar, AlertCircle, LogOut, Clock, Bell, Megaphone, GraduationCap
+  Computer, Calendar, AlertCircle, LogOut, Clock, Bell, Megaphone, GraduationCap, CalendarCheck
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -15,6 +15,7 @@ import IssuesTab from '@/components/dashboard/IssuesTab';
 import SessionsTab from '@/components/dashboard/SessionsTab';
 import NotificationsTab from '@/components/dashboard/NotificationsTab';
 import LabNoticesTab from '@/components/dashboard/LabNoticesTab';
+import AttendanceTab from '@/components/dashboard/AttendanceTab';
 export default function StudentDashboard() {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -214,6 +215,10 @@ export default function StudentDashboard() {
                   <Megaphone className="w-4 h-4" />
                   Lab Notices
                 </TabsTrigger>
+                <TabsTrigger value="attendance" className="flex items-center gap-1">
+                  <CalendarCheck className="w-4 h-4" />
+                  My Attendance
+                </TabsTrigger>
               </TabsList>
             </CardHeader>
             <CardContent>
@@ -231,6 +236,9 @@ export default function StudentDashboard() {
               </TabsContent>
               <TabsContent value="notices" className="mt-0">
                 <LabNoticesTab userId={user?.id || ''} isAdminOrStaff={false} />
+              </TabsContent>
+              <TabsContent value="attendance" className="mt-0">
+                <AttendanceTab userId={user?.id || ''} />
               </TabsContent>
             </CardContent>
           </Tabs>
