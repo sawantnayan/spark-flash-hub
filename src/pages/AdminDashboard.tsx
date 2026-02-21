@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   Computer, Calendar, AlertCircle, Users, LogOut, Clock, Bell, 
-  Megaphone, FileText, FileSpreadsheet, Package, Shield
+  Megaphone, FileText, FileSpreadsheet, Package, Shield, CalendarCheck
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -21,6 +21,7 @@ import NotificationsTab from '@/components/dashboard/NotificationsTab';
 import LabNoticesTab from '@/components/dashboard/LabNoticesTab';
 import ReportsTab from '@/components/dashboard/ReportsTab';
 import ImportExportTab from '@/components/dashboard/ImportExportTab';
+import AttendanceTab from '@/components/dashboard/AttendanceTab';
 
 export default function AdminDashboard() {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -231,6 +232,10 @@ export default function AdminDashboard() {
                   <FileSpreadsheet className="w-4 h-4" />
                   <span className="hidden sm:inline">Import/Export</span>
                 </TabsTrigger>
+                <TabsTrigger value="attendance" className="flex items-center gap-1">
+                  <CalendarCheck className="w-4 h-4" />
+                  <span className="hidden sm:inline">Attendance</span>
+                </TabsTrigger>
               </TabsList>
             </CardHeader>
             <CardContent>
@@ -263,6 +268,9 @@ export default function AdminDashboard() {
               </TabsContent>
               <TabsContent value="import-export" className="mt-0">
                 <ImportExportTab isAdminOrStaff={true} userId={user?.id || ''} />
+              </TabsContent>
+              <TabsContent value="attendance" className="mt-0">
+                <AttendanceTab userId={user?.id || ''} isAdminOrStaff={true} />
               </TabsContent>
             </CardContent>
           </Tabs>

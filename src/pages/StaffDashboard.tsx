@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   Computer, Calendar, AlertCircle, Users, LogOut, Clock, Bell, 
-  Megaphone, Package
+  Megaphone, Package, CalendarCheck
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -18,6 +18,7 @@ import SessionsTab from '@/components/dashboard/SessionsTab';
 import SoftwareTab from '@/components/dashboard/SoftwareTab';
 import NotificationsTab from '@/components/dashboard/NotificationsTab';
 import LabNoticesTab from '@/components/dashboard/LabNoticesTab';
+import AttendanceTab from '@/components/dashboard/AttendanceTab';
 
 export default function StaffDashboard() {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -198,6 +199,10 @@ export default function StaffDashboard() {
                   <Megaphone className="w-4 h-4" />
                   Notices
                 </TabsTrigger>
+                <TabsTrigger value="attendance" className="flex items-center gap-1">
+                  <CalendarCheck className="w-4 h-4" />
+                  Attendance
+                </TabsTrigger>
               </TabsList>
             </CardHeader>
             <CardContent>
@@ -221,6 +226,9 @@ export default function StaffDashboard() {
               </TabsContent>
               <TabsContent value="notices" className="mt-0">
                 <LabNoticesTab userId={user?.id || ''} isAdminOrStaff={true} />
+              </TabsContent>
+              <TabsContent value="attendance" className="mt-0">
+                <AttendanceTab userId={user?.id || ''} isAdminOrStaff={true} />
               </TabsContent>
             </CardContent>
           </Tabs>
